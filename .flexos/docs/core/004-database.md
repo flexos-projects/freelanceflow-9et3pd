@@ -1,73 +1,149 @@
 ---
-id: "004-database"
-title: "Database & Data Model"
+id: freelanceflow-database
+title: 'Database Schema & Rules'
+description: 'Detailed information on the Firestore collections, data schemas, relationships, and security rules.'
 type: doc
 subtype: core
 status: draft
 sequence: 4
-tags: [database, schema, collections, data]
+tags:
+  - database
+  - firestore
+  - schema
+createdAt: '2023-10-27T10:00:00Z'
+updatedAt: '2023-10-27T10:00:00Z'
 ---
 
-# Database & Data Model
+# Database Schema & Rules
 
-> Every piece of data the product stores, how it's structured, and how it relates. This is the foundation for the backend.
+This document specifies the data architecture for FreelanceFlow, which will be implemented using Google Cloud Firestore. The structure is designed for efficient querying and strong security.
 
-## Database Choice
+## Database Choice: Firestore
 
-Which database and why. Default: Firestore (NoSQL, real-time, serverless). Document any reasons to deviate.
+Firestore is chosen for its:
+*   **Scalability:** It scales automatically to meet demand.
+*   **Real-time Capabilities:** Enables dynamic updates on the dashboard and other UI elements.
+*   **Powerful Security Model:** Allows for granular, user-based access control directly in the database rules.
+*   **Serverless Nature:** Fits perfectly with our serverless architecture using Firebase Functions, as outlined in the [Technical Document](./007-technical.md).
 
-## Collection Inventory
+## Collections
 
-List every collection/table in the system with a one-line description:
+We will use a relatively flat data structure to facilitate queries and security rules.
 
-| Collection | Description | Primary Key |
-|-----------|-------------|-------------|
-| `users` | User accounts and profiles | auto-generated |
-| (add collections...) | | |
+1.  **`users`**
+    *   **Description:** Stores information for each registered freelancer. The document ID will be the user's `uid` from Firebase Authentication.
+    *   **Schema:**
+        ```json
+        {
+          "email": "string",
+          "displayName": "string",
+          "photoURL": "string",
+          "createdAt": "timestamp",
+          "stripeAccountId": "string | null"
+        }
+        ```
 
-## Schema Definitions
+2.  **`clients`**
+    *   **Description:** A top-level collection containing all clients for all users, secured by rules.
+    *   **Schema:**
+        ```json
+        {
+          "userId": "string", // Foreign key to users collection
+          "name": "string",
+          "email": "string",
+          "address": "string",
+          "createdAt": "timestamp"
+        }
+        ```
 
-For each collection, define the full schema:
+3.  **`projects`**
+    *   **Description:** A top-level collection for all projects.
+    *   **Schema:**
+        ```json
+        {
+          "userId": "string",
+          "clientId": "string", // Foreign key to clients collection
+          "clientName": "string", // Denormalized for display
+          "name": "string",
+          "status": "'active' | 'completed' | 'archived'",
+          "rateType": "'hourly' | 'fixed'",
+          "hourlyRate": "number | null",
+          "fixedPrice": "number | null",
+          "createdAt": "timestamp"
+        }
+        ```
 
-### `users`
+4.  **`timeEntries`**
+    *   **Description:** A top-level collection for all time entries, allowing for easy querying across all projects.
+    *   **Schema:**
+        ```json
+        {
+          "userId": "string",
+          "projectId": "string",
+          "clientId": "string",
+          "date": "timestamp",
+          "duration": "number", // in minutes
+          "description": "string",
+          "isBilled": "boolean",
+          "invoiceId": "string | null", // Set when entry is added to an invoice
+          "createdAt": "timestamp"
+        }
+        ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | yes | Auto-generated document ID |
-| `email` | string | yes | User's email address |
-| `displayName` | string | yes | Display name |
-| `createdAt` | timestamp | yes | Account creation time |
-| `updatedAt` | timestamp | yes | Last modification time |
+5.  **`invoices`**
+    *   **Description:** A top-level collection for all invoices.
+    *   **Schema:**
+        ```json
+        {
+          "userId": "string",
+          "clientId": "string",
+          "projectId": "string",
+          "clientName": "string", // Denormalized
+          "projectName": "string", // Denormalized
+          "invoiceNumber": "string",
+          "status": "'draft' | 'sent' | 'paid' | 'overdue'",
+          "issueDate": "timestamp",
+          "dueDate": "timestamp",
+          "lineItems": "array<object>", // [{ description, quantity, rate, amount }]
+          "subtotal": "number",
+          "total": "number",
+          "createdAt": "timestamp"
+        }
+        ```
 
-(Continue for each collection...)
+## Relationships & Denormalization
 
-## Relationships
-
-How do collections reference each other? Document every foreign key relationship:
-
-- `posts.userId` → references `users.id` (one-to-many: one user has many posts)
-- (continue for all relationships...)
-
-## Access Patterns
-
-What queries does the application need? This determines indexes and security rules:
-
-| Query | Collection | Filters | Sort | Used By |
-|-------|-----------|---------|------|---------|
-| Get user's posts | `posts` | `userId == x` | `createdAt desc` | Dashboard |
-| (add queries...) | | | | |
-
-## Security Rules
-
-Who can read/write what? Define per-collection:
-
-- **users:** Owner can read/write own doc. Others can read displayName only.
-- (continue for each collection...)
+*   **Relationships:** We use `userId`, `clientId`, and `projectId` as foreign keys to link documents.
+*   **Denormalization:** To avoid complex queries and improve read performance, we denormalize some data. For example, `invoices` and `projects` store `clientName`. When a client's name is updated, a cloud function will trigger to update it across all related documents.
 
 ## Indexes
 
-Based on access patterns, which composite indexes are needed?
+To support our application's queries, we will need to configure the following composite indexes in Firestore:
 
-## Data Migration
+*   `projects(userId, status)`: For filtering projects by their status on the main projects page.
+*   `invoices(userId, status)`: For filtering invoices on the invoices page.
+*   `timeEntries(userId, projectId, isBilled)`: To efficiently fetch unbilled time entries when creating an invoice for a specific project.
 
-If this project was imported, document any data migration needs. What data exists in the old system? How does it map to the new schema?
+## Security Rules
+
+Our security model is based on user ownership. Users can only access documents that contain their `userId`.
+
+```firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read and update their own user document
+    match /users/{userId} {
+      allow read, update: if request.auth.uid == userId;
+    }
+
+    // Users can CRUD documents they own
+    match /{collection}/{docId} where collection in ['clients', 'projects', 'timeEntries', 'invoices'] {
+      allow read, delete, update: if resource.data.userId == request.auth.uid;
+      allow create: if request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
+```
+This ensures that data is strictly isolated between users at the database level, providing a strong security foundation.

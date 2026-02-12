@@ -1,59 +1,101 @@
 ---
-id: "002-features"
-title: "Feature Inventory"
+id: freelanceflow-features
+title: 'Feature Inventory & MVP Scope'
+description: 'A prioritized list of all features for FreelanceFlow, defining the scope for MVP and future releases.'
 type: doc
 subtype: core
 status: draft
 sequence: 2
-tags: [features, mvp, scope]
+tags:
+  - features
+  - mvp
+  - roadmap
+createdAt: '2023-10-27T10:00:00Z'
+updatedAt: '2023-10-27T10:00:00Z'
 ---
 
-# Feature Inventory
+# Feature Inventory & MVP Scope
 
-> The complete list of what this product can do, organized by priority. This is the single source of truth for product scope.
+This document details the features planned for FreelanceFlow, prioritized into P0 (MVP), P1 (Fast Follow), and P2 (Future). This prioritization is guided by our [Vision & Strategy](./001-vision.md) to deliver core value first.
 
-## Priority Framework
+## P0: Minimum Viable Product (MVP)
 
-Features are classified into three tiers:
+The MVP is focused on enabling a freelancer to complete the entire billing cycle for a single client project. This is the essential workflow.
 
-- **P0 (Must Have):** The product doesn't work without these. Ship in MVP.
-- **P1 (Should Have):** Important for a good experience. Ship in v1.1.
-- **P2 (Nice to Have):** Delightful but not essential. Ship when capacity allows.
+*   **User Authentication:**
+    *   Sign up and Login with Email/Password.
+    *   Sign up and Login with Google (OAuth).
+    *   Password reset functionality.
 
-## P0 Features (MVP)
+*   **Dashboard:**
+    *   A single, non-customizable dashboard view.
+    *   Widget: Key metric card for 'Revenue - Last 30 Days'.
+    *   Widget: List of 'Active Projects' with links to project pages.
+    *   Widget: List of 'Recent Invoices' with status (Sent, Paid, Overdue).
 
-List every feature that must exist for the product to be viable. For each:
+*   **Client Management (CRUD):**
+    *   Create, Read, Update, and Delete clients.
+    *   Client entity includes: Name, Email, Phone, Address.
 
-- **Name:** Short, descriptive name
-- **Description:** What it does in 2-3 sentences
-- **User Stories:** "As a [user], I want to [action] so that [benefit]"
-- **Acceptance Criteria:** How do we know it's done?
-- **Dependencies:** Other features this requires
-- **Pages:** Which pages surface this feature
+*   **Project Management (CRUD):**
+    *   Create, Read, Update, and Delete projects.
+    *   Projects must be associated with a Client.
+    *   Project entity includes: Name, Status (Active, Completed), Rate Type (Hourly, Fixed), Hourly Rate or Fixed Price.
 
-## P1 Features
+*   **Time Tracking (CRUD):**
+    *   Create, Read, Update, and Delete time entries.
+    *   Time entries must be associated with a Project.
+    *   Entry entity includes: Date, Duration (e.g., in hours/minutes), and a brief Description.
 
-Features that make the product good, not just functional. Same format as P0.
+*   **Invoice Management:**
+    *   Generate an invoice for a specific project from its unbilled time entries.
+    -   Manually add/edit/remove line items on an invoice.
+    *   Assign an invoice number, issue date, and due date.
+    *   Update invoice status manually: Draft, Sent, Paid.
+    *   Download a clean, professional PDF of the invoice.
 
-## P2 Features
+## P1: Fast Follow
 
-Features that delight. Same format as P0.
+These features will be prioritized immediately after the MVP launch to enhance the core experience and introduce our key differentiator, the Client Portal.
 
-## Feature-to-Page Matrix
+*   **Client Portal (V1 - Read-Only):**
+    *   Generate a unique, shareable link per client.
+    *   Clients can view their associated projects and their statuses.
+    *   Clients can view and download all their invoices.
+    *   This feature is critical for our strategy, as noted in the [Vision Document](./001-vision.md).
 
-A grid showing which features appear on which pages. This reveals gaps — pages with no features, features with no pages.
+*   **Payment Integration (Stripe):**
+    *   Freelancers can connect their Stripe account.
+    *   Invoices sent from FreelanceFlow will include a 'Pay Now' button.
+    *   Payment status will automatically update the invoice status in the app via webhooks.
 
-| Feature | Landing | Dashboard | Settings | Profile |
-|---------|---------|-----------|----------|---------|
-| (list features vs pages) | | | | |
+*   **Advanced Dashboard Widgets:**
+    *   Add widgets for 'Time Logged This Week' and 'Project Budget vs. Actuals'.
 
-## MVP Scope
+*   **Basic Reporting:**
+    *   Export time entries for a given date range as a CSV file.
 
-Summarize the exact scope of the first release. What's in, what's out, and why. Include estimated complexity (S/M/L) for each P0 feature.
+## P2: Future Enhancements
 
-## Feature Dependencies
+These are features we plan to build in the medium to long term, based on user feedback and growth.
 
-Which features depend on others? Draw the dependency graph as a list:
+*   **Client Portal (V2 - Interactive):**
+    *   Clients can comment on deliverables.
+    *   Clients can formally approve/reject items.
 
-- Feature A requires Feature B (because...)
-- Feature C requires Feature A and Feature D
+*   **Proposals & Estimates:**
+    *   Create and send professional estimates to potential clients.
+    *   Ability to convert an accepted estimate into a project.
+
+*   **Recurring Invoices:**
+    *   Set up automated invoicing schedules for retainer clients (e.g., monthly on the 1st).
+
+*   **Expense Tracking:**
+    *   Log project-related expenses and attach receipts.
+    *   Option to add billable expenses to invoices.
+
+*   **Integrations (Accounting):**
+    *   Connect to QuickBooks, Xero, or Wave to sync invoices and payments.
+
+*   **Team Functionality:**
+    *   Allow freelancers to add team members to track time on projects.

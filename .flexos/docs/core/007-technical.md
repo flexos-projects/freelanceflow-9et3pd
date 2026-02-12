@@ -1,99 +1,87 @@
 ---
-id: "007-technical"
-title: "Technical Architecture"
+id: freelanceflow-technical
+title: 'Technical Architecture & Stack'
+description: 'An overview of the application architecture, technology stack, API design, and deployment strategy.'
 type: doc
 subtype: core
 status: draft
 sequence: 7
-tags: [technical, architecture, stack, deployment]
+tags:
+  - architecture
+  - tech-stack
+  - api
+  - deployment
+createdAt: '2023-10-27T10:00:00Z'
+updatedAt: '2023-10-27T10:00:00Z'
 ---
 
-# Technical Architecture
+# Technical Architecture & Stack
 
-> How the product is built, deployed, and maintained. The engineer's reference document.
-
-## Tech Stack
-
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Framework | Nuxt 4 | Full-stack Vue, SSR, file-based routing |
-| Database | Firestore | Real-time, serverless, scales automatically |
-| Auth | Firebase Auth | Email/password, social login, session management |
-| Hosting | Vercel | Edge deployment, preview deploys, serverless functions |
-| Storage | Vercel Blob | File uploads, images, assets |
-| Styling | UnoCSS / Tailwind | Utility-first, design token integration |
+This document provides a comprehensive overview of the technical decisions and implementation plan for FreelanceFlow.
 
 ## Architecture Overview
 
-Describe the high-level architecture — client/server split, data flow, caching strategy.
+We will adopt a **serverless, Jamstack architecture**. This approach maximizes developer velocity, scalability, and security while minimizing operational overhead.
 
-### Client
+*   **Frontend:** A client-rendered Single Page Application (SPA) built with Next.js. The app shell is served statically, and data is fetched dynamically from our backend APIs. This provides a fast, native-like user experience after the initial load.
+*   **Backend:** A collection of serverless functions (Backend-as-a-Service) hosted on Firebase Functions. These functions will handle all business logic, database interactions, and third-party integrations.
+*   **Database:** A managed NoSQL database, Cloud Firestore, as detailed in the [Database Document](./004-database.md).
+*   **Authentication:** Firebase Authentication will manage user identity, sessions, and security tokens.
 
-- Nuxt 4 SPA with SSR for public pages
-- Vue 3 Composition API throughout
-- State management via composables (not Pinia unless complex)
-- File-based routing with middleware for auth gates
+This decoupled architecture allows the frontend and backend to be developed, deployed, and scaled independently.
 
-### Server
+## Technology Stack
 
-- Nuxt server routes (server/api/)
-- Firebase Admin SDK for privileged operations
-- Server-side rendering for SEO-critical pages
-- Edge functions for API routes
+*   **Framework:** **Next.js (React)** - Chosen for its powerful ecosystem, excellent developer experience, and flexible rendering strategies. We will use its SPA capabilities for the core application.
+*   **Language:** **TypeScript** - For both frontend and backend to ensure type safety, reduce bugs, and improve code maintainability.
+*   **Styling:** **Tailwind CSS** - A utility-first CSS framework that allows for rapid and consistent UI development directly in the markup.
+*   **Backend Runtime:** **Node.js** (via Firebase Functions).
+*   **Database:** **Cloud Firestore**.
+*   **Authentication:** **Firebase Authentication** (Email/Password, Google Provider).
+*   **Deployment & Hosting:**
+    *   **Vercel:** For the Next.js frontend. Vercel provides seamless, Git-based deployments, a global CDN, and automatic HTTPS.
+    *   **Firebase Hosting:** To host and provision our Firebase Functions and security rules.
 
-### Data Flow
+## API Design
 
-```
-Client → Nuxt Server Routes → Firestore
-         ↕                     ↕
-      Firebase Auth         Cloud Functions (if needed)
-```
+Our API will be a set of RESTful endpoints exposed via HTTPS-triggered Firebase Functions. All endpoints will be protected and require a valid Firebase Auth ID token in the `Authorization` header.
 
-## API Routes
+**Example API Routes:**
 
-List every API endpoint the product needs:
+*   **Clients**
+    *   `GET /api/clients`: Fetches all clients for the authenticated user.
+    *   `POST /api/clients`: Creates a new client. Body contains client data.
 
-| Method | Path | Purpose | Auth |
-|--------|------|---------|------|
-| POST | /api/auth/login | Authenticate user | No |
-| GET | /api/[resource] | List resources | Yes |
-| POST | /api/[resource] | Create resource | Yes |
-| (continue...) | | | |
+*   **Projects**
+    *   `GET /api/projects?clientId=:id`: Fetches projects for a specific client.
+    *   `POST /api/projects`: Creates a new project.
 
-## Authentication
+*   **Invoices**
+    *   `POST /api/invoices`: Creates a new invoice from unbilled time entries.
+        *   Body: `{ "projectId": "string", "timeEntryIds": ["string"] }`
+    *   `POST /api/invoices/:id/send`: Triggers the email sending process for a draft invoice.
 
-- **Method:** Firebase Auth (email/password + Google OAuth)
-- **Session:** HTTP-only cookie with Firebase session token
-- **Middleware:** `auth.ts` middleware checks session on protected routes
-- **Token refresh:** Automatic via Firebase SDK
+*   **Webhooks**
+    *   `POST /api/webhooks/stripe`: A public endpoint to receive and process webhooks from Stripe.
 
-## Environment Variables
+## State Management
 
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `FIREBASE_PROJECT_ID` | Firebase project | Yes |
-| `FIREBASE_CLIENT_EMAIL` | Service account | Yes |
-| `FIREBASE_PRIVATE_KEY` | Service account | Yes |
-| (continue...) | | |
+For the frontend application, we will manage state using a combination of approaches:
 
-## Deployment
+*   **Server Cache/Remote State:** We will use a library like **React Query (TanStack Query)** to manage data fetching, caching, and synchronization with our Firestore database. This handles loading states, error states, and re-fetching automatically.
+*   **UI State:** For local component state (e.g., form inputs, modal visibility), we will use React's built-in hooks (`useState`, `useReducer`).
+*   **Global State:** For global state that needs to be shared across the application (e.g., the authenticated user's profile), we will use React's Context API. We will avoid more complex libraries like Redux unless application complexity demonstrably requires it.
 
-- **Production:** Vercel, auto-deploy from `main` branch
-- **Preview:** Vercel preview deploys on every PR
-- **Database:** Firestore production instance
-- **CI/CD:** GitHub Actions for linting, type-checking, tests
+## Deployment & DevOps
 
-## Performance Targets
+We will implement a CI/CD pipeline to automate testing and deployment.
 
-- **First Contentful Paint:** < 1.5s
-- **Time to Interactive:** < 3s
-- **Lighthouse Score:** > 90 (performance, accessibility)
-- **API Response Time:** < 200ms (p95)
-
-## Security Considerations
-
-- All API routes validate input (Zod schemas)
-- Firestore security rules enforce per-document access
-- CORS configured for production domain only
-- Rate limiting on auth endpoints
-- No secrets in client bundle
+*   **Source Control:** GitHub.
+*   **CI/CD:** GitHub Actions.
+*   **Workflow:**
+    1.  A developer pushes a commit to a feature branch.
+    2.  A Pull Request to the `main` branch triggers the CI pipeline.
+    3.  The pipeline runs: `npm install`, `lint`, `type-check`, and `unit tests` (Jest/React Testing Library).
+    4.  If all checks pass, the PR can be reviewed and merged.
+    5.  A merge to `main` automatically triggers a production deployment to Vercel and Firebase.
+*   **Environments:** We will maintain separate `development` (local emulators), `staging`, and `production` environments, each with its own Firebase project, to ensure safe testing before releasing to users.
