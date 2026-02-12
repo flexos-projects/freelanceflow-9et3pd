@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Showcase</title>
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/components.css">
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand" id="nav-brand">Project</a>
+      <a href="#vision" class="nav-link" data-section="vision">Vision</a>
+      <a href="#features" class="nav-link" data-section="features">Features</a>
+      <a href="#design-system" class="nav-link" data-section="design-system">Design System</a>
+      <a href="#sitemap" class="nav-link" data-section="sitemap">Sitemap</a>
+      <a href="#team" class="nav-link" data-section="team">Team</a>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" aria-label="Toggle theme">&#9790;</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <div class="hero-badge" id="hero-badge">v0.1.0</div>
+      <h1 class="hero-title" id="hero-title">Project Name</h1>
+      <p class="hero-subtitle" id="hero-subtitle">A short tagline describing what this product does and why it matters.</p>
+      <div class="hero-actions">
+        <a href="#design-system" class="btn btn-primary">View Design System</a>
+        <a href="#sitemap" class="btn btn-outline">View Structure</a>
+      </div>
+      <div class="stats" id="stats-row"></div>
+    </section>
+
+    <!-- Vision -->
+    <section class="section" id="vision">
+      <div class="section-label">Vision</div>
+      <h2 class="section-title">What we're building</h2>
+      <p class="section-subtitle" id="vision-description">A longer description that explains the value proposition, who it's for, and why it matters.</p>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Core Features</h2>
+      <p class="section-subtitle">The building blocks that make this product work.</p>
+      <div class="grid grid-3" id="features-grid"></div>
+    </section>
+
+    <!-- Design System -->
+    <section class="section" id="design-system">
+      <div class="section-label">Design System</div>
+      <h2 class="section-title">Tokens &amp; Patterns</h2>
+      <p class="section-subtitle">Every visual decision is captured as a design token. Click any color to copy its value.</p>
+
+      <div class="token-group">
+        <div class="token-group-title">Color Palette</div>
+        <div class="swatches" id="color-swatches"></div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Type Scale</div>
+        <div id="type-scale"></div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Font Weights</div>
+        <div id="font-weights"></div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Spacing Scale</div>
+        <div id="spacing-scale"></div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Border Radius</div>
+        <div class="radius-demos" id="radius-demos"></div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Elevation / Shadows</div>
+        <div class="shadow-demos" id="shadow-demos"></div>
+      </div>
+    </section>
+
+    <!-- Sitemap -->
+    <section class="section" id="sitemap">
+      <div class="section-label">Structure</div>
+      <h2 class="section-title">Sitemap</h2>
+      <p class="section-subtitle">Every page in the prototype, and what's been built so far.</p>
+      <div class="grid grid-2" id="sitemap-grid"></div>
+    </section>
+
+    <!-- Team -->
+    <section class="section" id="team">
+      <div class="section-label">Team</div>
+      <h2 class="section-title">Who's building this</h2>
+      <p class="section-subtitle">The people behind the project.</p>
+      <div class="grid grid-2" id="team-grid"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer-text">Built with <a href="#">FlexOS</a></p>
+      <p class="footer-version" id="footer-version">v0.1.0</p>
+    </footer>
+
+  </div>
+
+  <!-- Copy Toast -->
+  <div class="toast" id="toast">Copied!</div>
+
+  <script src="../shared/mock-data.js"></script>
+  <script>
+    // ================================================================
+    // Theme Toggle
+    // ================================================================
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    // Restore saved preference
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      html.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      html.setAttribute('data-theme', 'dark');
+    }
+
+    function updateToggleIcon() {
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      themeToggle.innerHTML = isDark ? '&#9788;' : '&#9790;';
+      themeToggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+
+    updateToggleIcon();
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      const next = isDark ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateToggleIcon();
+      // Re-render color swatches to show current values
+      renderColorSwatches();
+    });
+
+    // ================================================================
+    // Data Population
+    // ================================================================
+    const d = MockData;
+    const icons = { star: '&#9733;', zap: '&#9889;', shield: '&#9740;', check: '&#10003;', heart: '&#9829;', globe: '&#9793;', home: '&#8962;' };
+
+    document.getElementById('hero-title').textContent = d.project.name;
+    document.getElementById('hero-subtitle').textContent = d.project.description;
+    document.getElementById('hero-badge').textContent = 'v' + d.project.version;
+    document.getElementById('nav-brand').textContent = d.project.name;
+    document.getElementById('footer-version').textContent = 'v' + d.project.version;
+    document.getElementById('vision-description').textContent = d.project.description;
+    document.title = d.project.name + ' — Showcase';
+
+    // Stats
+    const statsRow = document.getElementById('stats-row');
+    d.stats.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'stat';
+      el.innerHTML = '<div class="stat-value">' + s.value + '</div><div class="stat-label">' + s.label + '</div>';
+      statsRow.appendChild(el);
+    });
+
+    // Features
+    const featGrid = document.getElementById('features-grid');
+    d.features.forEach(f => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML =
+        '<div class="card-icon">' + (icons[f.icon] || '&#9679;') + '</div>' +
+        '<div class="card-title">' + f.title + '</div>' +
+        '<div class="card-text">' + f.description + '</div>';
+      featGrid.appendChild(el);
+    });
+
+    // Team
+    const teamGrid = document.getElementById('team-grid');
+    d.team.forEach(t => {
+      const initials = t.name.split(' ').map(w => w[0]).join('').toUpperCase();
+      const el = document.createElement('div');
+      el.className = 'team-card';
+      el.innerHTML =
+        '<div class="team-avatar">' + initials + '</div>' +
+        '<div><div class="team-name">' + t.name + '</div>' +
+        '<div class="team-role">' + t.role + '</div></div>';
+      teamGrid.appendChild(el);
+    });
+
+    // Sitemap
+    const sitemapGrid = document.getElementById('sitemap-grid');
+    d.navigation.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'sitemap-item';
+      el.innerHTML =
+        '<div class="sitemap-icon">' + (icons[p.icon] || '&#9679;') + '</div>' +
+        '<div class="sitemap-info"><div class="sitemap-name">' + p.label + '</div>' +
+        '<div class="sitemap-desc">' + p.href + '</div></div>' +
+        '<div class="sitemap-badge">Built</div>';
+      sitemapGrid.appendChild(el);
+    });
+
+    // ================================================================
+    // Design System Showcase
+    // ================================================================
+
+    const colorTokens = [
+      { name: '--color-primary', group: 'Primary' },
+      { name: '--color-primary-dark', group: 'Primary' },
+      { name: '--color-primary-light', group: 'Primary' },
+      { name: '--color-accent', group: 'Accent' },
+      { name: '--color-success', group: 'Semantic' },
+      { name: '--color-warning', group: 'Semantic' },
+      { name: '--color-error', group: 'Semantic' },
+      { name: '--color-bg', group: 'Surface' },
+      { name: '--color-surface', group: 'Surface' },
+      { name: '--color-elevated', group: 'Surface' },
+      { name: '--color-border', group: 'Surface' },
+      { name: '--color-text-primary', group: 'Text' },
+      { name: '--color-text-secondary', group: 'Text' },
+      { name: '--color-text-tertiary', group: 'Text' },
+    ];
+
+    function renderColorSwatches() {
+      const container = document.getElementById('color-swatches');
+      container.innerHTML = '';
+      const styles = getComputedStyle(html);
+      colorTokens.forEach(t => {
+        const val = styles.getPropertyValue(t.name).trim();
+        const el = document.createElement('div');
+        el.className = 'swatch';
+        el.title = 'Click to copy: ' + t.name;
+        el.onclick = () => copyToClipboard(val, t.name);
+        el.innerHTML =
+          '<div class="swatch-color" style="background:' + val + '"></div>' +
+          '<div class="swatch-hex">' + val + '</div>' +
+          '<div class="swatch-name">' + t.name.replace('--color-', '') + '</div>';
+        container.appendChild(el);
+      });
+    }
+
+    renderColorSwatches();
+
+    // Type Scale
+    const typeScaleTokens = [
+      { name: '--font-size-xs' },
+      { name: '--font-size-sm' },
+      { name: '--font-size-base' },
+      { name: '--font-size-lg' },
+      { name: '--font-size-xl' },
+      { name: '--font-size-2xl' },
+      { name: '--font-size-3xl' },
+      { name: '--font-size-4xl' },
+    ];
+
+    const typeContainer = document.getElementById('type-scale');
+    typeScaleTokens.forEach(t => {
+      const val = getComputedStyle(html).getPropertyValue(t.name).trim();
+      const label = t.name.replace('--font-size-', '');
+      const el = document.createElement('div');
+      el.className = 'type-row';
+      el.innerHTML =
+        '<div class="type-label">' + label + ' <span class="type-muted">' + val + '</span></div>' +
+        '<div class="type-sample" style="font-size:var(' + t.name + ')">The quick brown fox jumps over the lazy dog</div>';
+      typeContainer.appendChild(el);
+    });
+
+    // Font Weights
+    const weightTokens = [
+      { name: '--font-weight-normal', label: 'Normal (400)' },
+      { name: '--font-weight-medium', label: 'Medium (500)' },
+      { name: '--font-weight-semibold', label: 'Semibold (600)' },
+      { name: '--font-weight-bold', label: 'Bold (700)' },
+    ];
+
+    const weightContainer = document.getElementById('font-weights');
+    weightTokens.forEach(w => {
+      const el = document.createElement('div');
+      el.className = 'type-row';
+      el.innerHTML =
+        '<div class="type-label">' + w.label + '</div>' +
+        '<div class="type-sample" style="font-weight:var(' + w.name + ');font-size:var(--font-size-lg)">Design tokens make everything consistent</div>';
+      weightContainer.appendChild(el);
+    });
+
+    // Spacing
+    const spacingTokens = [
+      { name: '--space-1', val: '0.25rem' },
+      { name: '--space-2', val: '0.5rem' },
+      { name: '--space-3', val: '0.75rem' },
+      { name: '--space-4', val: '1rem' },
+      { name: '--space-6', val: '1.5rem' },
+      { name: '--space-8', val: '2rem' },
+      { name: '--space-12', val: '3rem' },
+      { name: '--space-16', val: '4rem' },
+      { name: '--space-24', val: '6rem' },
+    ];
+
+    const spacingContainer = document.getElementById('spacing-scale');
+    spacingTokens.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'space-row';
+      el.innerHTML =
+        '<div class="space-label">' + t.name.replace('--', '') + '</div>' +
+        '<div class="space-bar" style="width:var(' + t.name + ')"></div>' +
+        '<div class="space-value">' + t.val + '</div>';
+      spacingContainer.appendChild(el);
+    });
+
+    // Border Radius
+    const radiusTokens = [
+      { name: '--radius-sm' },
+      { name: '--radius-md' },
+      { name: '--radius-lg' },
+      { name: '--radius-xl' },
+      { name: '--radius-full' },
+    ];
+
+    const radiusContainer = document.getElementById('radius-demos');
+    radiusTokens.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'radius-demo';
+      el.innerHTML =
+        '<div class="radius-box" style="border-radius:var(' + t.name + ')"></div>' +
+        '<div class="radius-label">' + t.name.replace('--radius-', '') + '</div>';
+      radiusContainer.appendChild(el);
+    });
+
+    // Shadows
+    const shadowTokens = [
+      { name: '--shadow-sm', label: 'Small' },
+      { name: '--shadow-md', label: 'Medium' },
+      { name: '--shadow-lg', label: 'Large' },
+    ];
+
+    const shadowContainer = document.getElementById('shadow-demos');
+    shadowTokens.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'shadow-demo';
+      el.innerHTML =
+        '<div class="shadow-box" style="box-shadow:var(' + t.name + ')"></div>' +
+        '<div class="shadow-label">' + t.label + '</div>';
+      shadowContainer.appendChild(el);
+    });
+
+    // ================================================================
+    // Interactions
+    // ================================================================
+
+    function copyToClipboard(text, label) {
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.textContent = 'Copied ' + label;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1500);
+      });
+    }
+
+    // Scroll spy
+    const sections = document.querySelectorAll('.section, .hero');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('data-section') === id);
+          });
+        }
+      });
+    }, { rootMargin: '-20% 0px -75% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>
